@@ -127,6 +127,7 @@ class MountEntry {
 
 // Turn off backlight while we are performing power down cleanup activities.
 static void TurnOffBacklight() {
+#ifndef UMOUNT_AND_FSCK_IS_UNSAFE
     static constexpr char OFF[] = "0";
 
     android::base::WriteStringToFile(OFF, "/sys/class/leds/lcd-backlight/brightness");
@@ -146,6 +147,7 @@ static void TurnOffBacklight() {
         std::string fileName = StringPrintf("%s/%s/brightness", backlightDir, dp->d_name);
         android::base::WriteStringToFile(OFF, fileName);
     }
+#endif
 }
 
 static void ShutdownVold() {
@@ -434,7 +436,9 @@ bool HandlePowerctlMessage(const std::string& command) {
         if (cmd_params.size() == 2 && cmd_params[1] == "userrequested") {
             // The shutdown reason is PowerManager.SHUTDOWN_USER_REQUESTED.
             // Run fsck once the file system is remounted in read-only mode.
+#ifndef UMOUNT_AND_FSCK_IS_UNSAFE
             run_fsck = true;
+#endif
         }
     } else if (cmd_params[0] == "reboot") {
         cmd = ANDROID_RB_RESTART2;
